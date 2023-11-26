@@ -1,0 +1,67 @@
+
+// Super Rewards Forex Software
+// Developer: Forex Robot Easy Team
+// Developer's Site: forexroboteasy.com
+
+// Include necessary libraries
+#include <Trade\Trade.mqh>
+#include <Trade\PositionInfo.mqh>
+
+// Define constants
+#define RISK_TO_REWARD_RATIO 5
+#define MAX_TRADE_COUNT 5
+
+// Initialize necessary variables
+CTrade trade;
+CPositionInfo positionInfo;
+
+// Function to calculate risk amount based on current account balance and risk-to-reward ratio
+double CalculateRiskAmount(double accountBalance, int riskRewardRatio)
+{
+    return (accountBalance * riskRewardRatio) / 100;
+}
+
+// Function to open a trade with specified trade direction, lot size, and stop loss
+void OpenTrade(double lotSize, double stopLoss, ENUM_ORDER_TYPE tradeType)
+{
+    double accountBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+    double riskAmount = CalculateRiskAmount(accountBalance, RISK_TO_REWARD_RATIO);
+    
+    if (positionInfo.Total() < MAX_TRADE_COUNT)
+    {
+        double tradeVolume = NormalizeDouble(lotSize * riskAmount / stopLoss, 2);
+        
+        trade.Sell(tradeVolume, NULL, stopLoss, 0, NULL);
+        trade.Buy(tradeVolume, NULL, stopLoss, 0, NULL);
+    }
+}
+
+// Function to close all open trades
+void CloseAllTrades()
+{
+    for (int i = positionInfo.Total(); i >= 0; i--)
+    {
+        trade.PositionSelect(i);
+        trade.PositionClose();
+    }
+}
+
+// Entry point of the EA
+void OnTick()
+{
+    // Check if there are any open trades
+    if (positionInfo.Total() == 0)
+    {
+        // No open trades, open new trades
+        OpenTrade(0.01, 100, ORDER_TYPE_BUY);
+        OpenTrade(0.02, 200, ORDER_TYPE_SELL);
+        OpenTrade(0.03, 300, ORDER_TYPE_BUY);
+        OpenTrade(0.04, 400, ORDER_TYPE_SELL);
+        OpenTrade(0.05, 500, ORDER_TYPE_BUY);
+    }
+    else
+    {
+        // Close all open trades
+        CloseAllTrades();
+    }
+}
